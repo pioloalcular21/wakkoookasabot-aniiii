@@ -49,6 +49,9 @@ else:
     df = pd.read_excel(uploaded_file)
     st.success("✅ Dataset successfully loaded!")
 
+    # Clean column names
+    df.columns = df.columns.str.strip()
+
     # ---- SIDEBAR MENU ----
     section = st.sidebar.radio(
         "Select Section:",
@@ -71,56 +74,62 @@ else:
             ]
         )
 
+        # Helper function
+        def get_data(category):
+            subset = df[df["Category"].str.strip() == category]
+            if subset.empty:
+                st.warning(f"No data found for {category}")
+                return None, None
+            # If multiple rows, take the mean of each column
+            data = subset.iloc[:, 1:].mean()
+            labels = data.index.tolist()
+            values = data.values.tolist()
+            return labels, values
+
         # ---- PIE CHART ----
         if tam_chart == "Perceived Usefulness (PU) - Pie Chart":
-            selected_data = df[df["Category"] == "Perceived Usefulness (PU)"].iloc[0, 1:]
-            labels = selected_data.index.tolist()[::-1]
-            values = selected_data.values.tolist()[::-1]
-            fig, ax = plt.subplots(figsize=(6, 5))
-            ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
-            ax.set_title("Perceived Usefulness (PU)")
-            st.pyplot(fig)
+            labels, values = get_data("Perceived Usefulness (PU)")
+            if labels:
+                fig, ax = plt.subplots(figsize=(6, 5))
+                ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
+                ax.set_title("Perceived Usefulness (PU)")
+                st.pyplot(fig)
 
         # ---- BAR CHART ----
         elif tam_chart == "Perceived Ease of Use (PEOU) - Bar Chart":
-            selected_data = df[df["Category"] == "Perceived Ease of Use (PEOU)"].iloc[0, 1:]
-            labels = selected_data.index.tolist()
-            values = selected_data.values.tolist()
-            fig, ax = plt.subplots(figsize=(7, 5))
-            ax.bar(labels, values, color="royalblue", edgecolor="black")
-            ax.set_title("Perceived Ease of Use (PEOU)")
-            st.pyplot(fig)
+            labels, values = get_data("Perceived Ease of Use (PEOU)")
+            if labels:
+                fig, ax = plt.subplots(figsize=(7, 5))
+                ax.bar(labels, values, color="royalblue", edgecolor="black")
+                ax.set_title("Perceived Ease of Use (PEOU)")
+                st.pyplot(fig)
 
         # ---- LINE CHART ----
         elif tam_chart == "Attitude Toward Using (ATU) - Line Chart":
-            selected_data = df[df["Category"] == "Attitude Toward Using (ATU)"].iloc[0, 1:]
-            labels = selected_data.index.tolist()
-            values = selected_data.values.tolist()
-            fig, ax = plt.subplots(figsize=(8, 5))
-            ax.plot(labels, values, marker="o", color="mediumseagreen", linewidth=2)
-            ax.set_title("Attitude Toward Using (ATU)")
-            st.pyplot(fig)
+            labels, values = get_data("Attitude Toward Using (ATU)")
+            if labels:
+                fig, ax = plt.subplots(figsize=(8, 5))
+                ax.plot(labels, values, marker="o", color="mediumseagreen", linewidth=2)
+                ax.set_title("Attitude Toward Using (ATU)")
+                st.pyplot(fig)
 
         # ---- STACKED BAR ----
         elif tam_chart == "Behavioral Intention (BI) - Stacked Bar Chart":
-            selected_data = df[df["Category"] == "Behavioral Intention (BI)"]
-            scales = ["3-Neutral", "4-Agree", "5-Strongly Agree"]
-            colors = ["moccasin", "lightskyblue", "royalblue"]
-
-            fig, ax = plt.subplots(figsize=(8, 5))
-            bottom = [0]
-            for i, scale in enumerate(scales):
-                ax.bar(
-                    ["Behavioral Intention (BI)"],
-                    selected_data[scale],
-                    bottom=bottom,
-                    label=scale,
-                    color=colors[i]
-                )
-                bottom = [a + b for a, b in zip(bottom, selected_data[scale])]
-            ax.legend(title="Scale", bbox_to_anchor=(1.05, 1), loc="upper left")
-            ax.set_title("Behavioral Intention (BI)")
-            st.pyplot(fig)
+            subset = df[df["Category"].str.strip() == "Behavioral Intention (BI)"]
+            if not subset.empty:
+                scales = ["3-Neutral", "4-Agree", "5-Strongly Agree"]
+                colors = ["moccasin", "lightskyblue", "royalblue"]
+                fig, ax = plt.subplots(figsize=(8, 5))
+                bottom = [0]
+                for i, scale in enumerate(scales):
+                    ax.bar(["Behavioral Intention (BI)"], subset[scale].sum(), 
+                           bottom=bottom, label=scale, color=colors[i])
+                    bottom = [bottom[0] + subset[scale].sum()]
+                ax.legend(title="Scale", bbox_to_anchor=(1.05, 1), loc="upper left")
+                ax.set_title("Behavioral Intention (BI)")
+                st.pyplot(fig)
+            else:
+                st.warning("No data found for Behavioral Intention (BI)")
 
     # =============================
     # 🧪 USER ACCEPTANCE TESTING (UAT)
@@ -138,47 +147,56 @@ else:
             ]
         )
 
+        def get_uat_data(category):
+            subset = df[df["Category"].str.strip() == category]
+            if subset.empty:
+                st.warning(f"No data found for {category}")
+                return None, None
+            data = subset.iloc[:, 1:].mean()
+            return data.index.tolist(), data.values.tolist()
+
         if uat_chart == "Functionality (Pie Chart)":
-            selected_data = df[df["Category"] == "UAT Functionality"].iloc[0, 1:]
-            labels = selected_data.index.tolist()[::-1]
-            values = selected_data.values.tolist()[::-1]
-            fig, ax = plt.subplots(figsize=(6, 5))
-            ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
-            ax.set_title("UAT Functionality")
-            st.pyplot(fig)
+            labels, values = get_uat_data("UAT Functionality")
+            if labels:
+                fig, ax = plt.subplots(figsize=(6, 5))
+                ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
+                ax.set_title("UAT Functionality")
+                st.pyplot(fig)
 
         elif uat_chart == "Usability (Bar Chart)":
-            selected_data = df[df["Category"] == "UAT Usability"].iloc[0, 1:]
-            labels = selected_data.index.tolist()
-            values = selected_data.values.tolist()
-            fig, ax = plt.subplots(figsize=(7, 5))
-            ax.bar(labels, values, color="lightcoral", edgecolor="black")
-            ax.set_title("UAT Usability")
-            st.pyplot(fig)
+            labels, values = get_uat_data("UAT Usability")
+            if labels:
+                fig, ax = plt.subplots(figsize=(7, 5))
+                ax.bar(labels, values, color="lightcoral", edgecolor="black")
+                ax.set_title("UAT Usability")
+                st.pyplot(fig)
 
         elif uat_chart == "Performance (Line Chart)":
-            selected_data = df[df["Category"] == "UAT Performance"].iloc[0, 1:]
-            labels = selected_data.index.tolist()
-            values = selected_data.values.tolist()
-            fig, ax = plt.subplots(figsize=(8, 5))
-            ax.plot(labels, values, marker="o", color="darkorange", linewidth=2)
-            ax.set_title("UAT Performance")
-            st.pyplot(fig)
+            labels, values = get_uat_data("UAT Performance")
+            if labels:
+                fig, ax = plt.subplots(figsize=(8, 5))
+                ax.plot(labels, values, marker="o", color="darkorange", linewidth=2)
+                ax.set_title("UAT Performance")
+                st.pyplot(fig)
 
         elif uat_chart == "Satisfaction & Acceptance (Stacked Bar Chart)":
             uat_subset = df[df["Category"].str.contains("UAT")]
-            categories = uat_subset["Category"]
-            scales = ["3-Neutral", "4-Agree", "5-Strongly Agree"]
-            colors = ["moccasin", "lightskyblue", "royalblue"]
+            if not uat_subset.empty:
+                categories = uat_subset["Category"]
+                scales = ["3-Neutral", "4-Agree", "5-Strongly Agree"]
+                colors = ["moccasin", "lightskyblue", "royalblue"]
 
-            fig, ax = plt.subplots(figsize=(9, 6))
-            bottom = [0] * len(categories)
-            for i, scale in enumerate(scales):
-                ax.bar(categories, uat_subset[scale], bottom=bottom, label=scale, color=colors[i])
-                bottom = [a + b for a, b in zip(bottom, uat_subset[scale])]
-            ax.legend(title="Scale", bbox_to_anchor=(1.05, 1), loc="upper left")
-            ax.set_title("UAT Satisfaction & Acceptance")
-            st.pyplot(fig)
+                fig, ax = plt.subplots(figsize=(9, 6))
+                bottom = [0] * len(categories)
+                for i, scale in enumerate(scales):
+                    ax.bar(categories, uat_subset[scale], bottom=bottom, label=scale, color=colors[i])
+                    bottom = [a + b for a, b in zip(bottom, uat_subset[scale])]
+                ax.legend(title="Scale", bbox_to_anchor=(1.05, 1), loc="upper left")
+                ax.set_title("UAT Satisfaction & Acceptance")
+                plt.xticks(rotation=20, ha='right')
+                st.pyplot(fig)
+            else:
+                st.warning("No UAT data found!")
 
     # =============================
     # 📘 ABOUT SECTION
