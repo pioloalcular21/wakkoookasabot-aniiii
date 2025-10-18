@@ -1,3 +1,12 @@
-streamlit
-pandas
-matplotlib
+# Core libraries
+streamlit==1.38.0
+pandas==2.2.2
+matplotlib==3.9.2
+openpyxl==3.1.5
+
+# Optional but useful for better performance and visuals
+numpy==1.26.4
+altair==5.3.0
+
+# To prevent encoding or dependency issues on Streamlit Cloud
+protobuf==4.25.3
